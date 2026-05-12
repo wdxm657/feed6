@@ -1,0 +1,47 @@
+---
+alwaysApply: true
+---
+
+# FT32F030K6ATx 单片机编码规范
+## 1. 概述
+- 本规范适用于基于FT32F030K6ATx（4K RAM,32K ROM）单片机的嵌入式软件开发，重点强调代码的简洁性、稳定性和资源优化。
+- 我将使用keil编译工程，所以代码编写完成后你不需要编译测试。
+  - 若有编译报错我会先自行修改，若不知道如何修改我会告知你来修改。
+
+## 2. 开发环境配置
+
+### 2.1 工具链路径
+- FT32库路径: C:/Keil_v5/ARM/PACK/FMD/FT32F0xx_DFP/1.1.3/Drivers/CMSIS/FT32F0xx/
+- ARM编译库路径: C:/Keil_v5/ARM/ARMCC/
+- ROTS库路径：C:/Keil_v5/ARM/PACK/ARM/CMSIS/5.3.0/CMSIS/RTOS2
+- 示例程序参考
+  - 单片机有一些示例程序你可以参考，但注意这些示例都是基于FT32F072x的开发板写的，你可以参考如何使用不同的外设如GPIO,中断，定时器，PWM等。
+  - 例程在
+    - C:\Users\JampMar\Desktop\work\project\feed6\StarterKit 32位开发板\Keil 例程\FT32F0xx_SarterKitDemo_Suites\Projects
+    - 每个目录下的User目录中有参考例子
+
+## 3. 单片机PCBA引脚分布
+- PA0    ADCIO  读取电池电压
+- PA1    普通IO  输出信号：AD读取控制引脚(默认输出高电平)
+- PA2    普通IO  输出信号：控制充电指示红色LED
+- PA3    ADCIO  读取电机驱动电压
+- PA4    普通IO  输入信号：当电池充电周期完成时，STDBY引脚被内部开关拉低，否则STDBY引脚高阻抗（默认上拉）。
+- PA5    普通IO  输入信号：当电池充电时，CHRG引脚被内部开关拉低，否则CHRG引脚为高阻抗(默认上拉)。
+- PA6    普通IO  输出信号：控制TP4056芯片是否使能
+- PA7    普通IO  输入信号：输入按键2(默认上拉)
+- PA8    普通IO  输出信号：控制普通蓝色LED
+- PA9    串口IO  串口TX：连接WIFI模块RX
+- PA10   串口IO  串口RX：连接WIFI模块TX
+- PA11   普通IO  输出信号：控制普通红色LED
+- PA12   普通IO  输出信号：控制电机驱动B
+- PA13   程序下载专用，不做IO使用
+- PA14   程序下载专用，不做IO使用
+- PA15   普通IO  输出信号：控制电机驱动A
+- PB0    普通IO  输入信号：检测USB是否插入 暂时不使用,通过PA4或PA5的中断信号检测USB是否插入
+- PB1    普通IO  输出信号：控制LC2202降压芯片开关，用来开关WIFI模块电源(默认输出低电平)
+- PB2    FT32F030K6ATx没有PB2
+- PB3    普通IO  输入信号：检测限位开关状态
+- PB4    PWMIO   输出信号：输出不同频率PWM信号用来音乐播放
+- PB5    普通IO  输出信号：LM4871放大电路开关，用来开关麦克风或蜂鸣器
+- PB6    普通IO  输入信号：输入按键1
+- PB7    普通IO  输出信号：控制充电指示绿色LED

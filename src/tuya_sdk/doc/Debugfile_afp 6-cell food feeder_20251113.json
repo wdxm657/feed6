@@ -1,0 +1,148 @@
+{
+    "Pro_Key": "6yr5wz2r58hcvmow",
+    "Dp_Data": [
+        {
+            "attr": 0,
+            "code": "meal_plan",
+            "defaultValue": "",
+            "desc": "同步到设备端本地，即使设备离线，扔能正常喂食出粮，喂食计划最多支持10个\n\nraw格式约定：按照周期+时间+喂食份数来实现本地定时，具体如下\n\n1，前7个比特位代表周一到周日，二进制转十六进制，占用一个字节，0代表未设置，1代表设置，如0000001，表示周日生效，转换为16进制就是01\n\n2，时间按照小时分钟格式，占用2个字节，分钟和小时，十进制转16进制，如18：50，转为16进制为1232\n\n3，喂食份数，占用1个字节，十进制转16进制，如12，转为16进制为0c\n\n4，开关，占用1个字节，00表示关闭，01表示开启\n\n上述举例，对于APP端时间下发的结果为0112320c01，表示周日，18：50，喂食12份，开启。",
+            "editPermission": false,
+            "extContent": "",
+            "iconname": "icon-dp_mode",
+            "id": 1,
+            "mode": "rw",
+            "name": "喂食计划",
+            "property": {
+                "maxlen": 128,
+                "type": "raw"
+            },
+            "subType": "raw",
+            "type": "raw"
+        },
+        {
+            "attr": 0,
+            "code": "manual_feed",
+            "defaultValue": "0",
+            "desc": "该DP的所能支持的最大值是100，实际使用场景一般在25以内，建议不要设置大，会直接影响面板体验。",
+            "editPermission": false,
+            "extContent": "",
+            "iconname": "icon-dp_mode",
+            "id": 3,
+            "mode": "rw",
+            "name": "手动喂食",
+            "property": {
+                "max": 1,
+                "min": 0,
+                "scale": 0,
+                "step": 1,
+                "type": "value",
+                "unit": ""
+            },
+            "subType": "value",
+            "type": "obj"
+        },
+        {
+            "attr": 1152,
+            "code": "battery_percentage",
+            "defaultValue": "",
+            "desc": "",
+            "editPermission": true,
+            "extContent": "",
+            "iconname": "icon-dp_battery",
+            "id": 10,
+            "mode": "ro",
+            "name": "电池电量",
+            "property": {
+                "max": 100,
+                "min": 0,
+                "scale": 0,
+                "step": 1,
+                "type": "value",
+                "unit": "%"
+            },
+            "subType": "value",
+            "type": "obj"
+        },
+        {
+            "attr": 1024,
+            "code": "charge_state",
+            "defaultValue": "",
+            "desc": "",
+            "editPermission": true,
+            "extContent": "",
+            "iconname": "icon-battery",
+            "id": 11,
+            "mode": "ro",
+            "name": "充电状态",
+            "property": {
+                "type": "bool"
+            },
+            "subType": "bool",
+            "type": "obj"
+        },
+        {
+            "attr": 1024,
+            "code": "fault",
+            "defaultValue": "",
+            "desc": "",
+            "editPermission": true,
+            "extContent": "",
+            "iconname": "icon-dp_notice",
+            "id": 13,
+            "mode": "ro",
+            "name": "故障告警",
+            "property": {
+                "label": [
+                    "pet_food_jam",
+                    "pet_food_shortages",
+                    "pet_food_run_out",
+                    "desiccant_exhausted",
+                    "battery_low"
+                ],
+                "maxlen": 5,
+                "type": "bitmap"
+            },
+            "subType": "bitmap",
+            "type": "obj"
+        },
+        {
+            "attr": 1152,
+            "code": "feed_report",
+            "defaultValue": "",
+            "desc": "",
+            "editPermission": true,
+            "extContent": "{\"trigger\":\"direct\"}",
+            "iconname": "icon-dp_upload",
+            "id": 14,
+            "mode": "ro",
+            "name": "喂食结果上报",
+            "property": {
+                "max": 12,
+                "min": 0,
+                "scale": 0,
+                "step": 1,
+                "type": "value"
+            },
+            "subType": "value",
+            "trigger": "direct",
+            "type": "obj"
+        },
+        {
+            "attr": 0,
+            "code": "factory_reset",
+            "defaultValue": "",
+            "desc": "",
+            "editPermission": false,
+            "extContent": "",
+            "iconname": "icon-dp_anti-clockwise",
+            "id": 24,
+            "mode": "rw",
+            "name": "恢复出厂",
+            "property": {
+                "type": "bool"
+            },
+            "subType": "bool",
+            "type": "obj"
+        }
+    ]
+}

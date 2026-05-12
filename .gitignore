@@ -1,0 +1,27 @@
+.vscode/
+
+# Keil MDK / uVision - build outputs & temp files
+Listings/
+Objects/
+RTE/_Target_*/
+DebugConfig/
+
+*.bak
+*.dep
+*.lnp
+*.lst
+*.map
+*.o
+*.obj
+*.omf
+*.d
+*.crf
+*.axf
+*.elf
+*.hex
+*.bin
+*.uvgui.*
+*.uvoptx.*
+JLinkLog*.txt
+JLinkSettings.ini
+*.scvd
