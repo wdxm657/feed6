@@ -22,6 +22,10 @@
 #include "gpio_init.h"
 #include "buzzer.h"
 #include "iwdg_init.h"
+#include "factory_test.h"
+
+#include "ft32f0xx_gpio.h"
+#include "ft32f0xx_rcc.h"
 
 /* 音频采样率（Hz） */
 #define AUDIO_SAMPLE_RATE 8000U
@@ -36,41 +40,72 @@ static void Motor_CompleteCallback(void)
 	// }
 }
 
+static uint8_t FactoryTest_ShouldEnterByPA9(void)
+{
+	/* 工厂测试入口：PA9或PA10 上电接地（低电平） */
+	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOA, ENABLE);
+
+	GPIO_InitTypeDef gpio_init;
+	GPIO_StructInit(&gpio_init);
+	gpio_init.GPIO_Pin = GPIO_Pin_9 | GPIO_Pin_10;
+	gpio_init.GPIO_Mode = GPIO_Mode_IN;
+	gpio_init.GPIO_PuPd = GPIO_PuPd_UP;
+	GPIO_Init(GPIOA, &gpio_init);
+
+	return (GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_9) == Bit_RESET || GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_10) == Bit_RESET) ? 1U : 0U;
+}
+
 int main(void)
 {
+	uint8_t enter_factory_test = FactoryTest_ShouldEnterByPA9();
+
 	/* 系统初始化 */
 	Board_Init();
 	/* 初始化任务调度器 */
 	TaskScheduler_Init();
-	/* 注册任务（按优先级从高到低） */
-	/* 高优先级任务：按键检测（需要快速响应） */
-	// TaskScheduler_Regis ter(IWDG_Task, TASK_PRIORITY_HIGH, 500);		   /* 500ms间隔，看门狗喂狗（最高优先级，防止系统死机） */
-	TaskScheduler_Register(key1_control, TASK_PRIORITY_HIGH, 10);		   /* 10ms间隔 */
-	TaskScheduler_Register(key2_control, TASK_PRIORITY_HIGH, 10);		   /* 10ms间隔 */
-	TaskScheduler_Register(Motor_AdcFilterTask, TASK_PRIORITY_HIGH, 20);   /* 20ms间隔，电机ADC滤波（ADC由DMA中断自动更新） */
-	TaskScheduler_Register(Battery_AdcFilterTask, TASK_PRIORITY_HIGH, 20); /* 20ms间隔，电池ADC滤波（ADC由DMA中断自动更新） */
-	TaskScheduler_Register(Buzzer_Task, TASK_PRIORITY_HIGH, 50);		   /* 50ms间隔，蜂鸣器控制 */
 
-	// /* 普通优先级任务：实时功能 */
-	TaskScheduler_Register(Motor_CycleProcess, TASK_PRIORITY_NORMAL, 100);	   /* 100ms监测电流 */
-	TaskScheduler_Register(Battery_Update, TASK_PRIORITY_NORMAL, 200);		   /* 200ms间隔，电池业务逻辑处理 */
-	TaskScheduler_Register(LED_WifiStatusControl, TASK_PRIORITY_NORMAL, 200);  /* 100ms间隔，WIFI状态LED控制 */
-	TaskScheduler_Register(USB_Detect_Process, TASK_PRIORITY_NORMAL, 100);	   /* 1000ms间隔，读取USB插入和拔出状态 */
-	TaskScheduler_Register(LED_PowerStatusControl, TASK_PRIORITY_NORMAL, 300); /* 100ms间隔，电源指示灯控制 */
-	// TaskScheduler_Register(Audio_Update, TASK_PRIORITY_NORMAL, 0);			   /* 每个循环执行 */
+	if (enter_factory_test != 0U)
+	{
+		FactoryTest_Init();
 
-	// /* 低优先级任务：监控功能（不需要频繁执行） */
-	TaskScheduler_Register(Flash_Schedule_Process, TASK_PRIORITY_LOW, 1000); /* 1000ms间隔，处理Flash读写 */
-	TaskScheduler_Register(RTC_Motor_TimerControl, TASK_PRIORITY_LOW, 1000); /* 1000ms间隔 */
-	TaskScheduler_Register(mcu_Dp_Update, TASK_PRIORITY_LOW, 5000);			 /* 5000ms间隔，电源插入检测上报 */
-	TaskScheduler_Register(RTC_Update, TASK_PRIORITY_LOW, 60000);			 /* 60000ms间隔 */
+		TaskScheduler_Register(Motor_AdcFilterTask, TASK_PRIORITY_HIGH, 20);
+		TaskScheduler_Register(Battery_AdcFilterTask, TASK_PRIORITY_HIGH, 20);
+		TaskScheduler_Register(Buzzer_Task, TASK_PRIORITY_HIGH, 50);
 
-	// RTC_User_SetDate(2025, 12, 11, 4); // 设置日期和星期
-	// RTC_User_SetTime(23, 59, 30);       // 设置时间
-	// 测试蜂鸣器
-	wifi_protocol_init();
-	LOG_DEBUG("main: wifi protocol init success");
-	Flash_Schedule_Load();
+		TaskScheduler_Register(FactoryTest_Task, TASK_PRIORITY_NORMAL, 20);
+
+		wifi_protocol_init();
+		// LOG_DEBUG("main: enter factory test");
+	}
+	else
+	{
+		/* 注册任务（按优先级从高到低） */
+		/* 高优先级任务：按键检测（需要快速响应） */
+		// TaskScheduler_Register(IWDG_Task, TASK_PRIORITY_HIGH, 500);		   /* 500ms间隔，看门狗喂狗（最高优先级，防止系统死机） */
+		TaskScheduler_Register(key1_control, TASK_PRIORITY_HIGH, 10);		   /* 10ms间隔 */
+		TaskScheduler_Register(key2_control, TASK_PRIORITY_HIGH, 10);		   /* 10ms间隔 */
+		TaskScheduler_Register(Motor_AdcFilterTask, TASK_PRIORITY_HIGH, 20);   /* 20ms间隔，电机ADC滤波（ADC由DMA中断自动更新） */
+		TaskScheduler_Register(Battery_AdcFilterTask, TASK_PRIORITY_HIGH, 20); /* 20ms间隔，电池ADC滤波（ADC由DMA中断自动更新） */
+		TaskScheduler_Register(Buzzer_Task, TASK_PRIORITY_HIGH, 50);		   /* 50ms间隔，蜂鸣器控制 */
+
+		// /* 普通优先级任务：实时功能 */
+		TaskScheduler_Register(Motor_CycleProcess, TASK_PRIORITY_NORMAL, 100);	   /* 100ms监测电流 */
+		TaskScheduler_Register(Battery_Update, TASK_PRIORITY_NORMAL, 200);		   /* 200ms间隔，电池业务逻辑处理 */
+		TaskScheduler_Register(LED_WifiStatusControl, TASK_PRIORITY_NORMAL, 200);  /* 100ms间隔，WIFI状态LED控制 */
+		TaskScheduler_Register(USB_Detect_Process, TASK_PRIORITY_NORMAL, 100);	   /* 1000ms间隔，读取USB插入和拔出状态 */
+		TaskScheduler_Register(LED_PowerStatusControl, TASK_PRIORITY_NORMAL, 300); /* 100ms间隔，电源指示灯控制 */
+		// TaskScheduler_Register(Audio_Update, TASK_PRIORITY_NORMAL, 0);			   /* 每个循环执行 */
+
+		// /* 低优先级任务：监控功能（不需要频繁执行） */
+		TaskScheduler_Register(Flash_Schedule_Process, TASK_PRIORITY_LOW, 1000); /* 1000ms间隔，处理Flash读写 */
+		TaskScheduler_Register(RTC_Motor_TimerControl, TASK_PRIORITY_LOW, 1000); /* 1000ms间隔 */
+		TaskScheduler_Register(mcu_Dp_Update, TASK_PRIORITY_LOW, 5000);			 /* 5000ms间隔，电源插入检测上报 */
+		TaskScheduler_Register(RTC_Update, TASK_PRIORITY_LOW, 60000);			 /* 60000ms间隔 */
+
+		wifi_protocol_init();
+		LOG_DEBUG("main: wifi protocol init success");
+		Flash_Schedule_Load();
+	}
 
 	/* 主循环：运行任务调度器 */
 	while (1)

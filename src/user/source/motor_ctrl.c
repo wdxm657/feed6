@@ -51,6 +51,7 @@ static volatile uint8_t s_cycle_overcurrent_blocked = 0U;
 static volatile uint32_t s_cycle_overcurrent_block_time = 0U;
 static volatile uint32_t s_cycle_last_sample_ms = 0U;
 static volatile uint8_t s_limit_switch_triggered = 0U; /* 限位开关中断标志 */
+static uint8_t s_limit_switch_feedback_enabled = 1U;	 /* 产测时可关闭，避免限位停电机 */
 
 /* 动态阈值相关 */
 static volatile uint16_t s_motor_current_threshold = MOTOR_OVERCURRENT_THRESHOLD_DEFAULT; /* 动态过流阈值 */
@@ -249,6 +250,17 @@ void Motor_Init(void)
 	/* 初始状态：电机停止 */
 	Motor_SetStop();
 	s_motor_running = 0U;
+	s_limit_switch_feedback_enabled = 1U;
+	s_limit_switch_triggered = 0U;
+}
+
+void Motor_SetLimitSwitchFeedbackEnabled(uint8_t enable)
+{
+	s_limit_switch_feedback_enabled = (enable != 0U) ? 1U : 0U;
+	if (s_limit_switch_feedback_enabled == 0U)
+	{
+		s_limit_switch_triggered = 0U;
+	}
 }
 
 void Motor_StopTimer(void)
@@ -505,6 +517,10 @@ void Motor_CycleProcess(void)
 
 void Motor_HandleLimitSwitchInterrupt(void)
 {
+	if (s_limit_switch_feedback_enabled == 0U)
+	{
+		return;
+	}
 	// 中断触发后再读取一次限位开关状态，如果是高电平，则认为是毛刺
 	if (GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_3) != RESET)
 	{

@@ -34,6 +34,9 @@ void Motor_CycleProcess(void);
 /* 限位信号中断回调，由EXTI中断调用 */
 void Motor_HandleLimitSwitchInterrupt(void);
 
+/* 1=限位中断参与停机和周期状态；0=忽略（产测：限位仅用于唤醒，电机按定时运行） */
+void Motor_SetLimitSwitchFeedbackEnabled(uint8_t enable);
+
 /* 故障处理接口 */
 void Motor_ClearCycleFault(void);
 uint8_t Motor_IsCycleFault(void);

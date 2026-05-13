@@ -30,6 +30,7 @@
 
 #include "wifi.h"
 #include "rtc_init.h"
+#include "factory_wifi_test_status.h"
 #include "flash_schedule.h"
 #include "log.h"
 #ifdef WEATHER_ENABLE
@@ -692,41 +693,9 @@ void get_upload_syn_result(unsigned char result)
  */
 void get_wifi_status(unsigned char result)
 {
-#error "请自行完成获取 WIFI 状态结果代码,并删除该行"
-
-    switch (result)
-    {
-    case 0:
-        // wifi工作状态1
-        break;
-
-    case 1:
-        // wifi工作状态2
-        break;
-
-    case 2:
-        // wifi工作状态3
-        break;
-
-    case 3:
-        // wifi工作状态4
-        break;
-
-    case 4:
-        // wifi工作状态5
-        break;
-
-    case 5:
-        // wifi工作状态6
-        break;
-
-    case 6:
-        // wifi工作状态7
-        break;
-
-    default:
-        break;
-    }
+    /* 产测/业务侧可按需实现；这里仅做状态透传，避免开启宏后编译中断 */
+    LOG_DEBUG("get_wifi_status: result 0x%x", result);
+    FactoryWifiTest_OnWifiStatus(result);
 }
 #endif
 
@@ -810,15 +779,9 @@ void maps_stream_trans_send_result(unsigned char result)
  */
 void wifi_connect_test_result(unsigned char result)
 {
-#error "请自行实现wifi功能测试成功/失败代码,完成后请删除该行"
-    if (result == 0)
-    {
-        // 路由信息接收失败，请检查发出的路由信息包是否是完整的JSON数据包
-    }
-    else
-    {
-        // 路由信息接收成功，产测结果请注意WIFI_STATE_CMD指令的wifi工作状态
-    }
+    /* 产测/业务侧可按需实现；这里仅做结果透传，避免开启宏后编译中断 */
+    LOG_DEBUG("wifi_connect_test_result: result 0x%x", result);
+    FactoryWifiTest_OnConnectTestResult(result);
 }
 #endif
 
