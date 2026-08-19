@@ -6,6 +6,7 @@
 #include "ft32f0xx_rcc.h"
 #include "mcu_api.h"
 #include "buzzer.h"
+#include "log.h"
 
 /* 按键GPIO定义 */
 #define KEY1_GPIO_PORT GPIOB
@@ -102,10 +103,17 @@ void key1_control(void)
 	{
 		if (Systick_Tick_IsTimeout(press_start_ms, 3000U))
 		{
-			Buzzer_Play(1U, 100U, 0U);
-			triggered = 1U;
-			// 控制电机旋转1圈
-			Motor_RunOneCycle();
+			if (Battery_GetPercentage() < 10 || Battery_GetCriticalLowStarted())
+			{
+				LOG_DEBUG("Battery too low to run motor cycle");
+			}
+			else
+			{
+				Buzzer_Play(1U, 100U, 0U);
+				triggered = 1U;
+				// 控制电机旋转1圈
+				Motor_RunOneCycle();
+			}
 		}
 	}
 

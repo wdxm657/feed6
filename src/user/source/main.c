@@ -99,7 +99,7 @@ int main(void)
 		// /* 低优先级任务：监控功能（不需要频繁执行） */
 		TaskScheduler_Register(Flash_Schedule_Process, TASK_PRIORITY_LOW, 1000); /* 1000ms间隔，处理Flash读写 */
 		TaskScheduler_Register(RTC_Motor_TimerControl, TASK_PRIORITY_LOW, 1000); /* 1000ms间隔 */
-		TaskScheduler_Register(mcu_Dp_Update, TASK_PRIORITY_LOW, 5000);			 /* 5000ms间隔，电源插入检测上报 */
+		TaskScheduler_Register(mcu_Dp_Update, TASK_PRIORITY_LOW, 1000);			 /* 5000ms间隔，电源插入检测上报 */
 		TaskScheduler_Register(RTC_Update, TASK_PRIORITY_LOW, 60000);			 /* 60000ms间隔 */
 
 		wifi_protocol_init();

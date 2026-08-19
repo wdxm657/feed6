@@ -208,22 +208,29 @@ void USB_Detect_Process(void)
 /**
  * @brief 单片机DP上传
  */
+uint8_t last_usb_flag = 0;
+uint8_t last_battery_percentage = 0U;
 void mcu_Dp_Update(void)
 {
-    static uint8_t last_usb_flag = 0;
-    static uint8_t last_battery_percentage = 0U;
     uint8_t wifi_state = mcu_get_wifi_work_state();
     if (wifi_state == WIFI_CONNECTED || wifi_state == WIFI_CONN_CLOUD)
     {
+        /* 上报电量百分比，但是只上报20的倍数, +20是为了80-99电量的时候 显示满格 以此类推 否则满格显示的机会不大了就*/
+        int8_t s_battery_percentage = Battery_GetPercentage() / 20 * 20 + 20;
         if (Get_USB_Flag())
         {
             mcu_dp_bool_update(DPID_CHARGE_STATE, 1);
+            last_usb_flag = 0;
         }
         else
         {
             mcu_dp_bool_update(DPID_CHARGE_STATE, 0);
-            /* 上报电量百分比，但是只上报20的倍数 */
-            int8_t s_battery_percentage = Battery_GetPercentage() / 20 * 20;
+            // 拔出USB时直接上报一次当前电量，防止电量一直没变动的时候不更新到APP
+            if (!last_usb_flag)
+            {
+                mcu_dp_value_update(DPID_BATTERY_PERCENTAGE, s_battery_percentage);
+                last_usb_flag = 1;
+            }
             // LOG_DEBUG("mcu_Dp_Update: battery_percentage: %d", s_battery_percentage);
             // 上报一次电量百分比，但是只上报20%的倍数
             if (last_battery_percentage != s_battery_percentage)

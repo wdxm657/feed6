@@ -414,7 +414,7 @@ void Battery_Update(void)
 		{
 			if (systick_ms - last_update_ms >= 1000U)
 			{
-				// LOG_DEBUG("Battery_Update: voltage_mv_real: %f, battery_percentage: %d", voltage_mv_real, s_battery_percentage);
+				LOG_DEBUG("Battery_Update: voltage_mv_real: %f, battery_percentage: %d", voltage_mv_real, s_battery_percentage);
 				last_update_ms = systick_ms;
 				/* 当电池百分比低于70% 关闭WIFI电源 进入低功耗模式(USB插入或按键IO中断会唤醒) */
 

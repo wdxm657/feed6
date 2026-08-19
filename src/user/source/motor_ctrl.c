@@ -35,6 +35,7 @@ static MotorCompleteCallback_t s_motor_complete_callback = NULL;
 #define MOTOR_BUZZER_REVERSE_ON_MS 100U
 #define MOTOR_BUZZER_REVERSE_GAP_MS 200U
 #define MOTOR_BUZZER_REVERSE_COUNT 5U
+#define MOTOR_NORMAL_STOP_DELAY_MS 100U /* 普通停止（正转限位触发）后电机多运行0.1s再停止 */
 
 typedef enum
 {
@@ -52,6 +53,7 @@ static volatile uint32_t s_cycle_overcurrent_block_time = 0U;
 static volatile uint32_t s_cycle_last_sample_ms = 0U;
 static volatile uint8_t s_limit_switch_triggered = 0U; /* 限位开关中断标志 */
 static uint8_t s_limit_switch_feedback_enabled = 1U;	 /* 产测时可关闭，避免限位停电机 */
+static volatile uint32_t s_limit_switch_time_ms = 0U;	 /* 限位开关触发时间，用于普通停止延时 */
 
 /* 动态阈值相关 */
 static volatile uint16_t s_motor_current_threshold = MOTOR_OVERCURRENT_THRESHOLD_DEFAULT; /* 动态过流阈值 */
@@ -375,10 +377,17 @@ void Motor_CycleProcess(void)
 	// 电机至少运转3秒后才能处理限位开关中断
 	if (s_limit_switch_triggered /* && Systick_Tick_IsTimeout(s_motor_start_time_ms, 3000U)*/)
 	{
+		/* 普通停止（正转限位触发）：等待延时结束后再停止电机，期间电机保持运行 */
+		if (s_cycle_state == MOTOR_CYCLE_STATE_FORWARD &&
+			!Systick_Tick_IsTimeout(s_limit_switch_time_ms, MOTOR_NORMAL_STOP_DELAY_MS))
+		{
+			return; /* 延时未到，电机继续运行，本次不处理 */
+		}
 		s_limit_switch_triggered = 0U;
 		if (s_cycle_state == MOTOR_CYCLE_STATE_FORWARD)
 		{
 			/* 正转限位触发：代表电机正常运转了一圈，完成 */
+			Motor_Stop(); /* 延时已到，停止电机 */
 			s_cycle_state = MOTOR_CYCLE_STATE_IDLE;
 			Motor_ResetCycleContext();
 			LOG_DEBUG("Motor: Forward limit switch triggered, cycle completed");
@@ -536,8 +545,18 @@ void Motor_HandleLimitSwitchInterrupt(void)
 	}
 	else
 	{
-		Motor_Stop();
-		s_limit_switch_triggered = 1U;
+		if (s_cycle_state == MOTOR_CYCLE_STATE_FORWARD && s_motor_running)
+		{
+			/* 普通停止：正转限位触发，电机多运行0.5s后再停止（停止动作在Motor_CycleProcess中延时完成） */
+			s_limit_switch_time_ms = Systick_Tick_GetMs();
+			s_limit_switch_triggered = 1U;
+		}
+		else
+		{
+			/* 其他情况（反转限位、电机未运行等）：立即停止 */
+			Motor_Stop();
+			s_limit_switch_triggered = 1U;
+		}
 	}
 }
 
