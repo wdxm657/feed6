@@ -493,10 +493,10 @@ void RTC_Motor_TimerControl(void)
     }
 
     /* 每5次调用打印一次时间（减少日志输出） */
-    if (cnt > 4)
+    if (cnt > 0)
     {
         cnt = 0;
-        // LOG_DEBUG("RTC_Motor_TimerControl: date: %d-%d-%d, time: %d:%d:%d, weekday: %d", year, month, date, hour, minute, second, weekday);
+        // LOG_INFO("RTC_Motor_TimerControl: date: %d-%d-%d, time: %d:%d:%d, weekday: %d", year, month, date, hour, minute, second, weekday);
         update_next_alarm();
     }
     else
@@ -508,7 +508,7 @@ void RTC_Motor_TimerControl(void)
         // 中断触发，代表时间点到了
         /* 启动电机旋转1圈 */
         Motor_RunOneCycle();
-
+        LOG_INFO("RTC MOTOR RUN ONCE ACTIVE");
         s_rtc_irq_flag = 0;
     }
 }
@@ -704,6 +704,7 @@ void update_next_alarm(void)
  */
 static void RTC_Alarm_UpdateNextAlarm(void)
 {
+    static uint8_t log_cnt = 0;
     RTC_TimeTypeDef current_time;
     RTC_DateTypeDef current_date;
     RTC_AlarmTypeDef alarm;
@@ -725,6 +726,16 @@ static void RTC_Alarm_UpdateNextAlarm(void)
     current_minute = current_time.RTC_Minutes;
     current_second = current_time.RTC_Seconds;
 
+    /* Do not replace the current alarm during its minute before it fires. */
+    if (s_last_alarm_valid &&
+        s_last_alarm.RTC_AlarmDateWeekDay == current_weekday &&
+        s_last_alarm.RTC_AlarmTime.RTC_Hours == current_hour &&
+        s_last_alarm.RTC_AlarmTime.RTC_Minutes == current_minute)
+    {
+        LOG_INFO("wait next minute");
+        return;
+    }
+
     /* 计算当前时间的总分钟数 */
     uint32_t current_total_minutes = current_hour * 60 + current_minute;
 
@@ -732,7 +743,6 @@ static void RTC_Alarm_UpdateNextAlarm(void)
     {
         uint8_t day_index = current_weekday - 1;
         DaySchedule_t *schedule = &week_schedule[day_index];
-
         for (uint8_t i = 0; i < schedule->count; i++)
         {
             TimePoint_t *tp = &schedule->time_points[i];
@@ -749,6 +759,14 @@ static void RTC_Alarm_UpdateNextAlarm(void)
                     next_hour = tp->hour;
                     next_minute = tp->minute;
                     found = 1;
+                    if (log_cnt > 30)
+                    {
+                        LOG_INFO("FOUND:cur %02d:%02d:%02d alarm: %02d:%02d weekday: %d",current_hour,current_minute,current_weekday, next_hour, next_minute, next_weekday);
+                        log_cnt = 0;
+                    }else{
+                        log_cnt++;
+                    }
+                    
                 }
             }
         }
@@ -799,7 +817,7 @@ static void RTC_Alarm_UpdateNextAlarm(void)
 
             /* 使能闹钟 */
             RTC_AlarmCmd(RTC_Alarm_A, ENABLE);
-            LOG_DEBUG("RTC_Alarm_UpdateNextAlarm: alarm: %02d:%02d weekday: %d", alarm.RTC_AlarmTime.RTC_Hours, alarm.RTC_AlarmTime.RTC_Minutes, alarm.RTC_AlarmDateWeekDay);
+            LOG_INFO("RTC_Alarm_UpdateNextAlarm: alarm: %02d:%02d weekday: %d", alarm.RTC_AlarmTime.RTC_Hours, alarm.RTC_AlarmTime.RTC_Minutes, alarm.RTC_AlarmDateWeekDay);
         }
         /* 如果闹钟相同，跳过配置，避免重复操作 */
     }
@@ -810,7 +828,7 @@ static void RTC_Alarm_UpdateNextAlarm(void)
         {
             RTC_AlarmCmd(RTC_Alarm_A, DISABLE);
             s_last_alarm_valid = 0;
-            LOG_DEBUG("RTC_Alarm_UpdateNextAlarm: today is no alarm");
+            LOG_INFO("RTC_Alarm_UpdateNextAlarm: today is no alarm");
         }
     }
 }

@@ -23,9 +23,9 @@ typedef enum
 #define LOG_OUTPUT_ALL    (LOG_OUTPUT_UART | LOG_OUTPUT_DP)
 
 /* 日志配置 */
-#define LOG_ENABLE         0    /* 是否启用日志：1-启用，0-禁用 */
-#define LOG_LEVEL          LOG_LEVEL_DEBUG  /* 当前日志级别，低于此级别的日志不输出 */
-#define LOG_OUTPUT_MODE    LOG_OUTPUT_UART  /* 输出方式：串口、DP或两者 */
+#define LOG_ENABLE         1    /* 是否启用日志：1-启用，0-禁用 */
+#define LOG_LEVEL          LOG_LEVEL_INFO  /* 当前日志级别，低于此级别的日志不输出 */
+#define LOG_OUTPUT_MODE    LOG_OUTPUT_DP  /* 输出方式：串口、DP或两者 */
 
 /* 日志缓冲区大小 */
 #define LOG_BUFFER_SIZE    256U
